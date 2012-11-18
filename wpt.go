@@ -49,7 +49,7 @@ func ParseYOTREPSMessage(text string) (w WayPoint, err error) {
 		if len(lines[i]) >= 1 {
 			if lines[i][len(lines[i])-1] == '=' {
 				lines[i] = lines[i][0:len(lines[i])-1] + lines[i+1]
-				// delete lines[i-1]
+				lines = append(lines[:i+1], lines[i+2:]...)
 			}
 		}
 	}
