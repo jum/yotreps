@@ -4,8 +4,6 @@ import (
 	"code.google.com/p/go-charset/charset"
 	_ "code.google.com/p/go-charset/data"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"regexp"
 	"strconv"
 	"strings"
@@ -75,13 +73,8 @@ func ParseYOTREPSMessage(text string) (w WayPoint, err error) {
 					return
 				}
 			case "COMMENT":
-				var r io.Reader
-				r, err = charset.NewReader("latin1", strings.NewReader(f[1]))
-				if err != nil {
-					return
-				}
 				var result []byte
-				result, err = ioutil.ReadAll(r)
+				_, result, err = t.Translate([]byte(f[1]), false)
 				if err != nil {
 					return
 				}
