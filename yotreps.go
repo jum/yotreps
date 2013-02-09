@@ -15,7 +15,7 @@ import (
 
 var (
 	mbox  *string = flag.String("mbox", "yotreps.mbox", "mailbox to read")
-	doFmt *string = flag.String("fmt", "json", "output format, xml or json")
+	doFmt *string = flag.String("fmt", "json", "output format, gpx or json")
 )
 
 const DEBUG = false
@@ -50,7 +50,7 @@ func main() {
 		//break
 	}
 	switch *doFmt {
-	case "xml":
+	case "gpx":
 		_, err = os.Stdout.Write([]byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <gpx
  version="1.1"
