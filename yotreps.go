@@ -11,6 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sort"
 )
 
 var (
@@ -25,6 +26,12 @@ func debug(format string, a ...interface{}) {
 		fmt.Printf(format, a...)
 	}
 }
+
+type WayPointTimeSorter []WayPoint
+
+func (p WayPointTimeSorter) Len() int           { return len(p) }
+func (p WayPointTimeSorter) Less(i, j int) bool { return p[i].Time.Before(p[j].Time) }
+func (p WayPointTimeSorter) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func main() {
 	flag.Parse()
@@ -49,6 +56,7 @@ func main() {
 		wpt = append(wpt, w)
 		//break
 	}
+	sort.Sort(WayPointTimeSorter(wpt))
 	switch *doFmt {
 	case "gpx":
 		_, err = os.Stdout.Write([]byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
