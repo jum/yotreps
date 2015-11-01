@@ -1,13 +1,14 @@
 package main
 
 import (
-	"code.google.com/p/go-charset/charset"
-	_ "code.google.com/p/go-charset/data"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/net/html/charset"
+	"golang.org/x/text/transform"
 )
 
 type WayPoint struct {
@@ -38,10 +39,11 @@ func ParseLatLon(s string) (ll float64, err error) {
 func ParseYOTREPSMessage(text string) (w WayPoint, err error) {
 	//debug("text %s\n", text)
 	eqRegex := regexp.MustCompile("(=[0-9a-fA-F][0-9a-fA-F])")
-	t, err := charset.TranslatorFrom("latin1")
-	if err != nil {
-		return
+	e, _ := charset.Lookup("latin1")
+	if e == nil {
+		panic("no latin1 charset")
 	}
+	t := e.NewDecoder()
 	lines := strings.Split(text, "\r\n")
 	for i := len(lines) - 2; i >= 0; i-- {
 		if len(lines[i]) >= 1 {
@@ -73,8 +75,8 @@ func ParseYOTREPSMessage(text string) (w WayPoint, err error) {
 					return
 				}
 			case "COMMENT":
-				var result []byte
-				_, result, err = t.Translate([]byte(f[1]), false)
+				var result string
+				result, _, err = transform.String(t, f[1])
 				if err != nil {
 					return
 				}
@@ -84,7 +86,7 @@ func ParseYOTREPSMessage(text string) (w WayPoint, err error) {
 						panic(err.Error())
 					}
 					bin := []byte{byte(val)}
-					_, bout, err := t.Translate(bin, false)
+					bout, _, err := transform.Bytes(t, bin)
 					if err != nil {
 						panic(err.Error())
 					}
