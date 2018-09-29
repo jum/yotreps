@@ -44,7 +44,13 @@ func ParseYOTREPSMessage(text string) (w WayPoint, err error) {
 		panic("no latin1 charset")
 	}
 	t := e.NewDecoder()
-	lines := strings.Split(text, "\r\n")
+	lines := strings.Split(text, "\n")
+	for i, l := range lines {
+		if len(l) > 0 && l[len(l)-1] == '\r' {
+			lines[i] = l[:len(l)-1]
+		}
+
+	}
 	for i := len(lines) - 2; i >= 0; i-- {
 		if len(lines[i]) >= 1 {
 			if lines[i][len(lines[i])-1] == '=' {
