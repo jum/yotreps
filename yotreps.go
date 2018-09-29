@@ -12,11 +12,15 @@ import (
 	"fmt"
 	"os"
 	"sort"
+
+	"github.com/bytbox/go-mail"
+	"github.com/luksen/maildir"
 )
 
 var (
-	mbox  *string = flag.String("mbox", "yotreps.mbox", "mailbox to read")
-	doFmt *string = flag.String("fmt", "json", "output format, gpx or json")
+	mbox    = flag.String("mbox", "", "mailbox to read")
+	mailDir = flag.String("maildir", "", "maildir to read")
+	doFmt   = flag.String("fmt", "json", "output format, gpx or json")
 )
 
 const DEBUG = false
@@ -34,29 +38,43 @@ func (p WayPointTimeSorter) Less(i, j int) bool { return p[i].Time.Before(p[j].T
 func (p WayPointTimeSorter) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func main() {
+	var (
+		mb  []mail.Message
+		err error
+	)
 	flag.Parse()
 	debug("mbox %v\n", *mbox)
-	mb, err := ReadMboxFile(*mbox)
-	if err != nil {
-		panic(err.Error())
+	debug("maildir %v\n", *mailDir)
+	if len(*mbox) > 0 {
+		mb, err = ReadMboxFile(*mbox)
+		if err != nil {
+			panic(err)
+		}
+	}
+	if len(*mailDir) > 0 {
+		mb, err = ReadMaildir(maildir.Dir(*mailDir))
+		if err != nil {
+			panic(err)
+		}
 	}
 	//debug("mb %#v\n", mb)
 	var wpt []WayPoint
-	for i, m := range mb {
+	for _, m := range mb {
 		//debug("m %#v\n", m)
 		//debug("text %#v\n", m.Text)
 		w, err := ParseYOTREPSMessage(m.Text)
 		if err != nil {
-			panic(err.Error())
-		}
-		if len(w.Name) == 0 {
-			w.Name = fmt.Sprintf("WPT%03d", i)
+			panic(err)
 		}
 		debug("w %#v\n", w)
 		wpt = append(wpt, w)
-		//break
 	}
 	sort.Sort(WayPointTimeSorter(wpt))
+	for i, w := range wpt {
+		if len(w.Name) == 0 {
+			w.Name = fmt.Sprintf("WPT%03d", i)
+		}
+	}
 	switch *doFmt {
 	case "gpx":
 		_, err = os.Stdout.Write([]byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -68,23 +86,24 @@ func main() {
  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
 `))
 		if err != nil {
-			panic(err.Error())
+			panic(err)
 		}
 		enc := xml.NewEncoder(os.Stdout)
 		err = enc.Encode(wpt)
 		if err != nil {
-			panic(err.Error())
+			panic(err)
 		}
 		_, err = os.Stdout.Write([]byte(`</gpx>
 `))
 		if err != nil {
-			panic(err.Error())
+			panic(err)
 		}
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
 		err = enc.Encode(wpt)
 		if err != nil {
-			panic(err.Error())
+			panic(err)
 		}
 	}
 }

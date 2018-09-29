@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/bytbox/go-mail"
+	"github.com/luksen/maildir"
 )
 
 const _MAX_LINE_LEN = 1024
@@ -67,4 +69,37 @@ func ReadMboxFile(filename string) ([]mail.Message, error) {
 	msgs, err := ReadMbox(f)
 	f.Close()
 	return msgs, err
+}
+
+func ReadMaildir(dir maildir.Dir) ([]mail.Message, error) {
+	var msgs []mail.Message
+	_, err := dir.Unseen()
+	if err != nil {
+		return nil, err
+	}
+	keys, err := dir.Keys()
+	if err != nil {
+		return nil, err
+	}
+	for _, k := range keys {
+		fname, err := dir.Filename(k)
+		if err != nil {
+			return nil, err
+		}
+		f, err := os.Open(fname)
+		if err != nil {
+			return nil, err
+		}
+		b, err := ioutil.ReadAll(f)
+		if err != nil {
+			return nil, err
+		}
+		m, err := mail.Parse(b)
+		if err != nil {
+			return nil, err
+		}
+		msgs = append(msgs, m)
+		f.Close()
+	}
+	return msgs, nil
 }
