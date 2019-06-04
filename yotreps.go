@@ -72,7 +72,7 @@ func main() {
 	sort.Sort(WayPointTimeSorter(wpt))
 	for i, w := range wpt {
 		if len(w.Name) == 0 {
-			w.Name = fmt.Sprintf("WPT%03d", i)
+			wpt[i].Name = fmt.Sprintf("WPT%03d", i)
 		}
 	}
 	switch *doFmt {
